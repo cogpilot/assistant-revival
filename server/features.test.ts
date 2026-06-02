@@ -16,6 +16,7 @@ vi.mock("./db", () => ({
   deleteChatSession: vi.fn(async () => {}),
   createChatMessage: vi.fn(async (data: any) => ({ id: 1, ...data, createdAt: new Date() })),
   getMessagesBySession: vi.fn(async () => []),
+  forkChatSession: vi.fn(async () => undefined),
 }));
 
 vi.mock("./storage", () => ({
@@ -136,5 +137,54 @@ describe("chat.deleteSession", () => {
   it("throws NOT_FOUND when session does not belong to user", async () => {
     const caller = appRouter.createCaller(makeCtx());
     await expect(caller.chat.deleteSession({ id: 999 })).rejects.toThrow("Session not found");
+  });
+});
+
+// ─── Fork Session ─────────────────────────────────────────────────────────────
+
+describe("chat.forkSession", () => {
+  it("throws NOT_FOUND when fork returns undefined (session/message not found)", async () => {
+    const caller = appRouter.createCaller(makeCtx());
+    await expect(
+      caller.chat.forkSession({ sessionId: 1, atMessageId: 5 })
+    ).rejects.toThrow("Session or message not found");
+  });
+
+  it("returns the forked session when successful", async () => {
+    const { forkChatSession } = await import("./db");
+    (forkChatSession as any).mockResolvedValueOnce({
+      id: 2,
+      userId: 42,
+      title: "Fork of: Original",
+      forkedFromId: 1,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    const caller = appRouter.createCaller(makeCtx());
+    const result = await caller.chat.forkSession({ sessionId: 1, atMessageId: 3 });
+    expect(result.id).toBe(2);
+    expect(result.title).toBe("Fork of: Original");
+    expect(result.forkedFromId).toBe(1);
+  });
+
+  it("uses custom title when provided", async () => {
+    const { forkChatSession } = await import("./db");
+    (forkChatSession as any).mockResolvedValueOnce({
+      id: 3,
+      userId: 42,
+      title: "My Custom Fork",
+      forkedFromId: 1,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    const caller = appRouter.createCaller(makeCtx());
+    const result = await caller.chat.forkSession({
+      sessionId: 1,
+      atMessageId: 3,
+      title: "My Custom Fork",
+    });
+    expect(result.title).toBe("My Custom Fork");
   });
 });
