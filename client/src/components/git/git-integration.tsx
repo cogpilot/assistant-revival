@@ -109,7 +109,7 @@ export function GitIntegration({ checkpoint, pendingChanges, onCommit }: GitInte
       const fileNames = pendingChanges.slice(0, MAX_FILES_TO_SHOW).map((c) => c.fileName);
       const remaining = pendingChanges.length - MAX_FILES_TO_SHOW;
       if (remaining > 0) {
-        return `Update ${fileNames.join(", ")} and ${remaining} more`;
+        return `Update ${fileNames.join(", ")} and ${remaining} ${remaining === 1 ? 'other' : 'more'}`;
       }
       return `Update ${fileNames.join(", ")}`;
     }

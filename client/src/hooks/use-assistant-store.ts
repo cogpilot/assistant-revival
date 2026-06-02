@@ -214,10 +214,12 @@ export const useAssistantStore = create<AssistantState>()(
         if (!branch) return;
 
         // Find the latest checkpoint for this branch, sorted by createdAt
+        // Pre-parse timestamps to avoid repeated Date instantiation in sort
         const branchCheckpoints = state.checkpoints
           .filter((c) => c.branchName === branch.name && c.sessionId === branch.sessionId)
-          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-        const latestCheckpoint = branchCheckpoints[0];
+          .map((c) => ({ checkpoint: c, timestamp: new Date(c.createdAt).getTime() }))
+          .sort((a, b) => b.timestamp - a.timestamp);
+        const latestCheckpoint = branchCheckpoints[0]?.checkpoint;
 
         if (latestCheckpoint) {
           set({

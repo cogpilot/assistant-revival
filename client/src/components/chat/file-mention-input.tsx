@@ -170,10 +170,10 @@ export function FileMentionInput({
   const handleInput = (newValue: string) => {
     onChange(newValue);
     
-    // Detect @ mentions
+    // Detect @ mentions - match file path characters (alphanumeric, dots, slashes, hyphens, underscores)
     const cursorPos = textareaRef.current?.selectionStart || 0;
     const textBeforeCursor = newValue.slice(0, cursorPos);
-    const atMatch = textBeforeCursor.match(/@(\S*)$/);
+    const atMatch = textBeforeCursor.match(/@([\w\-./]*)$/);
     
     if (atMatch) {
       setMentionFilter(atMatch[1]);
@@ -187,7 +187,7 @@ export function FileMentionInput({
   const insertMention = (filePath: string) => {
     const textBeforeCursor = value.slice(0, cursorPosition);
     const textAfterCursor = value.slice(cursorPosition);
-    const beforeAt = textBeforeCursor.replace(/@\S*$/, '');
+    const beforeAt = textBeforeCursor.replace(/@[\w\-./]*$/, '');
     const newValue = `${beforeAt}@${filePath} ${textAfterCursor}`;
     
     onChange(newValue);
@@ -205,7 +205,7 @@ export function FileMentionInput({
         e.preventDefault();
         setSelectedIndex((prev) => Math.max(prev - 1, 0));
       } else if (e.key === 'Enter' && showMentions) {
-        // Use Enter for selection (preserve Tab for accessibility)
+        // Use Enter for selection; Tab key is not intercepted to maintain accessibility
         e.preventDefault();
         if (rankedFiles[selectedIndex]) {
           insertMention(rankedFiles[selectedIndex].file.path);
