@@ -248,8 +248,7 @@ function SplitView({
                 pair.left?.type === "removed" && "bg-red-500/10 text-red-300"
               )}
             >
-              {pair.left?.type !== "unchanged" ? pair.left?.content : pair.left?.content}
-              {pair.left?.type === "unchanged" ? pair.left.content : pair.left?.content ?? ""}
+              {pair.left?.content ?? ""}
             </td>
 
             {/* Right (modified) */}
