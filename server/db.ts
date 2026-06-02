@@ -178,3 +178,60 @@ export async function getMessagesBySession(sessionId: number) {
   if (!db) return [];
   return db.select().from(chatMessages).where(eq(chatMessages.sessionId, sessionId)).orderBy(chatMessages.createdAt);
 }
+
+// ─── Conversation Forking ─────────────────────────────────────────────────────
+
+/**
+ * Forks a chat session at a specific message. Creates a new session and copies
+ * all messages up to (and including) the specified message.
+ */
+export async function forkChatSession(
+  originalSessionId: number,
+  userId: number,
+  atMessageId: number,
+  newTitle?: string
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // Verify original session belongs to user
+  const sessions = await db.select().from(chatSessions)
+    .where(and(eq(chatSessions.id, originalSessionId), eq(chatSessions.userId, userId)))
+    .limit(1);
+  if (!sessions[0]) return undefined;
+
+  const originalSession = sessions[0];
+
+  // Get messages up to the fork point
+  const allMessages = await db.select().from(chatMessages)
+    .where(eq(chatMessages.sessionId, originalSessionId))
+    .orderBy(chatMessages.createdAt);
+
+  const forkIndex = allMessages.findIndex((m) => m.id === atMessageId);
+  if (forkIndex === -1) return undefined;
+
+  const messagesToCopy = allMessages.slice(0, forkIndex + 1);
+
+  // Create the forked session
+  const title = newTitle ?? `Fork of: ${originalSession.title}`;
+  const [newSession] = await db.insert(chatSessions).values({
+    userId,
+    title,
+    forkedFromId: originalSessionId,
+  }).$returningId();
+
+  // Copy messages into the new session
+  if (messagesToCopy.length > 0) {
+    await db.insert(chatMessages).values(
+      messagesToCopy.map((m) => ({
+        sessionId: newSession.id,
+        userId: m.userId,
+        role: m.role,
+        content: m.content,
+      }))
+    );
+  }
+
+  const rows = await db.select().from(chatSessions).where(eq(chatSessions.id, newSession.id)).limit(1);
+  return rows[0];
+}

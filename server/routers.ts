@@ -10,7 +10,7 @@ import {
   createFile, getFilesByUser, getFileById, deleteFile,
   createChatSession, getChatSessionsByUser, getChatSessionById,
   updateChatSessionTitle, deleteChatSession,
-  createChatMessage, getMessagesBySession,
+  createChatMessage, getMessagesBySession, forkChatSession,
 } from "./db";
 
 export const appRouter = router({
@@ -105,6 +105,17 @@ export const appRouter = router({
         const assistantContent = typeof rawContent === "string" ? rawContent : "Sorry, I could not generate a response.";
         const assistantMessage = await createChatMessage({ sessionId: input.sessionId, userId: ctx.user.id, role: "assistant", content: assistantContent });
         return { userMessage, assistantMessage };
+      }),
+    forkSession: protectedProcedure
+      .input(z.object({
+        sessionId: z.number().int().positive(),
+        atMessageId: z.number().int().positive(),
+        title: z.string().min(1).max(255).optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const forked = await forkChatSession(input.sessionId, ctx.user.id, input.atMessageId, input.title);
+        if (!forked) throw new TRPCError({ code: "NOT_FOUND", message: "Session or message not found" });
+        return forked;
       }),
   }),
 });

@@ -48,6 +48,8 @@ export const chatSessions = mysqlTable("chat_sessions", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),
   title: varchar("title", { length: 255 }).notNull().default("New Chat"),
+  /** If this session was forked from another, store the parent session id */
+  forkedFromId: int("forkedFromId"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
