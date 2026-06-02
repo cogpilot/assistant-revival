@@ -1,7 +1,8 @@
-import { History, RotateCcw, Circle } from "lucide-react";
+import { History, RotateCcw, Circle, GitFork } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { BranchIndicator } from "./branch-indicator";
 import type { Checkpoint } from "@shared/schema";
 
 interface CheckpointListProps {
@@ -64,21 +65,34 @@ export function CheckpointList({ checkpoints, currentCheckpointId, onRestore }: 
                   <span className="text-sm font-medium truncate">
                     {checkpoint.description}
                   </span>
-                  {!isCurrent && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-6 px-2 text-xs"
-                      onClick={() => onRestore(checkpoint.id)}
-                      data-testid={`button-restore-${checkpoint.id}`}
-                    >
-                      <RotateCcw className="h-3 w-3 mr-1" />
-                      Restore
-                    </Button>
-                  )}
+                  <div className="flex items-center gap-1">
+                    {/* Branch indicator with fork button */}
+                    <BranchIndicator checkpoint={checkpoint} compact />
+                    
+                    {!isCurrent && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 px-2 text-xs"
+                        onClick={() => onRestore(checkpoint.id)}
+                        data-testid={`button-restore-${checkpoint.id}`}
+                      >
+                        <RotateCcw className="h-3 w-3 mr-1" />
+                        Restore
+                      </Button>
+                    )}
+                  </div>
                 </div>
-                <div className="text-xs text-muted-foreground mt-0.5">
-                  {timestamp} • {checkpoint.files.length} file{checkpoint.files.length !== 1 ? "s" : ""}
+                <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
+                  <span>{timestamp}</span>
+                  <span>•</span>
+                  <span>{checkpoint.files.length} file{checkpoint.files.length !== 1 ? "s" : ""}</span>
+                  {checkpoint.branchName && (
+                    <>
+                      <span>•</span>
+                      <span className="text-primary">{checkpoint.branchName}</span>
+                    </>
+                  )}
                 </div>
               </div>
             </div>

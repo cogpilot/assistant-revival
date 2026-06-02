@@ -50,10 +50,26 @@ export const checkpointSchema = z.object({
   description: z.string(),
   files: z.array(fileSchema),
   createdAt: z.string(),
+  // Forking support
+  parentCheckpointId: z.string().optional(),
+  branchName: z.string().optional(),
 });
 
 export type Checkpoint = z.infer<typeof checkpointSchema>;
 export type InsertCheckpoint = Omit<Checkpoint, "id" | "createdAt">;
+
+// Session branch schema for forking support
+export const sessionBranchSchema = z.object({
+  id: z.string(),
+  sessionId: z.string(),
+  name: z.string(),
+  parentCheckpointId: z.string(),
+  createdAt: z.string(),
+  isActive: z.boolean(),
+});
+
+export type SessionBranch = z.infer<typeof sessionBranchSchema>;
+export type InsertSessionBranch = Omit<SessionBranch, "id" | "createdAt">;
 
 // Code change for diffs
 export const codeChangeSchema = z.object({

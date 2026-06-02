@@ -6,8 +6,11 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { ChatContainer } from "@/components/chat/chat-container";
 import { FileViewer } from "@/components/files/file-viewer";
 import { DiffViewer } from "@/components/diff/diff-viewer";
+import { CommandPalette } from "@/components/command-palette";
 import { useAssistantStore } from "@/hooks/use-assistant-store";
 import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { Command } from "lucide-react";
 import type { Session, Checkpoint, CodeChange } from "@shared/schema";
 
 export default function Home() {
@@ -23,6 +26,7 @@ export default function Home() {
     clearMessages,
     addCheckpoint,
     updateFileContent,
+    restoreCheckpoint,
   } = useAssistantStore();
 
   const selectedFile = files.find((f) => f.id === selectedFileId);
@@ -100,7 +104,27 @@ export default function Home() {
                 {currentSessionId ? sessions.find(s => s.id === currentSessionId)?.name || "Chat" : "Welcome"}
               </span>
             </div>
-            <ThemeToggle />
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2 text-muted-foreground"
+                onClick={() => {
+                  // Trigger command palette via keyboard event
+                  const event = new KeyboardEvent('keydown', {
+                    key: 'k',
+                    metaKey: true,
+                    bubbles: true,
+                  });
+                  window.dispatchEvent(event);
+                }}
+                data-testid="button-command-palette"
+              >
+                <Command className="h-3 w-3" />
+                <span className="text-xs">⌘K</span>
+              </Button>
+              <ThemeToggle />
+            </div>
           </header>
 
           <main className="flex-1 overflow-hidden">
@@ -139,6 +163,13 @@ export default function Home() {
           </main>
         </div>
       </div>
+
+      {/* Command Palette */}
+      <CommandPalette
+        onNewSession={handleNewSession}
+        onSelectFile={setSelectedFileId}
+        onRestoreCheckpoint={restoreCheckpoint}
+      />
     </SidebarProvider>
   );
 }
