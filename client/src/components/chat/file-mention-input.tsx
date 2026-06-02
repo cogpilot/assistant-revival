@@ -204,7 +204,8 @@ export function FileMentionInput({
       } else if (e.key === 'ArrowUp') {
         e.preventDefault();
         setSelectedIndex((prev) => Math.max(prev - 1, 0));
-      } else if (e.key === 'Tab' || (e.key === 'Enter' && showMentions)) {
+      } else if (e.key === 'Enter' && showMentions) {
+        // Use Enter for selection (preserve Tab for accessibility)
         e.preventDefault();
         if (rankedFiles[selectedIndex]) {
           insertMention(rankedFiles[selectedIndex].file.path);
@@ -298,7 +299,7 @@ export function FileMentionInput({
               )}
             </ScrollArea>
             <div className="border-t px-3 py-1.5 text-xs text-muted-foreground flex items-center justify-between">
-              <span>↑↓ to navigate • Tab or Enter to select</span>
+              <span>↑↓ to navigate • Enter to select</span>
               <span>Esc to close</span>
             </div>
           </div>

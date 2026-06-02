@@ -92,12 +92,20 @@ export const useAssistantStore = create<AssistantState>()(
 
       deleteSession: (sessionId) => set((state) => {
         const { [sessionId]: _, ...remainingMessages } = state.sessionMessages;
+        // Also clear currentBranchId if it belongs to a deleted session's branch
+        const deletedBranchIds = state.branches
+          .filter((b) => b.sessionId === sessionId)
+          .map((b) => b.id);
+        const newCurrentBranchId = deletedBranchIds.includes(state.currentBranchId || '')
+          ? null
+          : state.currentBranchId;
         return {
           sessions: state.sessions.filter((s) => s.id !== sessionId),
           currentSessionId: state.currentSessionId === sessionId ? null : state.currentSessionId,
           sessionMessages: remainingMessages,
           checkpoints: state.checkpoints.filter((c) => c.sessionId !== sessionId),
           branches: state.branches.filter((b) => b.sessionId !== sessionId),
+          currentBranchId: newCurrentBranchId,
         };
       }),
 
@@ -205,11 +213,11 @@ export const useAssistantStore = create<AssistantState>()(
         const branch = state.branches.find((b) => b.id === branchId);
         if (!branch) return;
 
-        // Find the latest checkpoint for this branch
-        const branchCheckpoints = state.checkpoints.filter(
-          (c) => c.branchName === branch.name && c.sessionId === branch.sessionId
-        );
-        const latestCheckpoint = branchCheckpoints[branchCheckpoints.length - 1];
+        // Find the latest checkpoint for this branch, sorted by createdAt
+        const branchCheckpoints = state.checkpoints
+          .filter((c) => c.branchName === branch.name && c.sessionId === branch.sessionId)
+          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        const latestCheckpoint = branchCheckpoints[0];
 
         if (latestCheckpoint) {
           set({
